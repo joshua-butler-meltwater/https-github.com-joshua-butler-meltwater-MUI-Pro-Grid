@@ -1656,7 +1656,37 @@ export default function SimpleDataGrid() {
       )}
 
       {/* Data Grid */}
-      <Box sx={{ height: 600, width: "100%" }}>
+      <Box sx={{ height: 600, width: "100%", position: "relative" }}>
+        {/* Fixed-position dividers that will always be on top */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 50, // Width of the checkbox column
+            width: "3px",
+            backgroundColor: "#bdbdbd",
+            opacity: 0.8,
+            zIndex: 9999,
+            pointerEvents: "none", // Allow clicking through
+            boxShadow: "1px 0 3px rgba(0,0,0,0.1)",
+          }}
+        />
+        {/* Right side divider - positioned at width - 50px (actions column width) */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            right: 50, // Width of the actions column
+            width: "3px",
+            backgroundColor: "#bdbdbd",
+            opacity: 0.8,
+            zIndex: 9999,
+            pointerEvents: "none", // Allow clicking through
+            boxShadow: "-1px 0 3px rgba(0,0,0,0.1)",
+          }}
+        />
         <GridComponent
           rows={filteredRows}
           columns={columns}
@@ -1810,23 +1840,71 @@ export default function SimpleDataGrid() {
             },
             // Add borders to pinned columns with MUI's medium soft shadow
             "& .MuiDataGrid-pinnedColumnHeaders, & .MuiDataGrid-pinnedColumns": {
+              position: "relative",
+              zIndex: 50,
               "&.MuiDataGrid-pinnedColumns--left": {
                 borderRight: "1px solid #e0e0e0",
                 boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.1), 0px 6px 10px 0px rgba(0,0,0,0.04), 0px 1px 18px 0px rgba(0,0,0,0.02)",
+                "&::after": {
+                  content: '""',
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: "1px",
+                  backgroundColor: "#e0e0e0",
+                  zIndex: 100,
+                  pointerEvents: "none"
+                }
               },
               "&.MuiDataGrid-pinnedColumns--right": {
                 borderLeft: "1px solid #e0e0e0",
                 boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.1), 0px 6px 10px 0px rgba(0,0,0,0.04), 0px 1px 18px 0px rgba(0,0,0,0.02)",
+                "&::after": {
+                  content: '""',
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  bottom: 0,
+                  width: "1px",
+                  backgroundColor: "#e0e0e0",
+                  zIndex: 100,
+                  pointerEvents: "none"
+                }
               }
             },
             "& .MuiDataGrid-pinnedColumnHeaders": {
+              position: "relative",
+              zIndex: 50,
               "&.MuiDataGrid-pinnedColumnHeaders--left": {
                 borderRight: "1px solid #e0e0e0",
                 boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.1), 0px 6px 10px 0px rgba(0,0,0,0.04), 0px 1px 18px 0px rgba(0,0,0,0.02)",
+                "&::after": {
+                  content: '""',
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  bottom: 0,
+                  width: "1px",
+                  backgroundColor: "#e0e0e0",
+                  zIndex: 100,
+                  pointerEvents: "none"
+                }
               },
               "&.MuiDataGrid-pinnedColumnHeaders--right": {
                 borderLeft: "1px solid #e0e0e0",
                 boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.1), 0px 6px 10px 0px rgba(0,0,0,0.04), 0px 1px 18px 0px rgba(0,0,0,0.02)",
+                "&::after": {
+                  content: '""',
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  bottom: 0,
+                  width: "1px",
+                  backgroundColor: "#e0e0e0",
+                  zIndex: 100,
+                  pointerEvents: "none"
+                }
               }
             },
             // Add visible borders to pinned columns with !important to override any inline styles
@@ -1841,6 +1919,34 @@ export default function SimpleDataGrid() {
             },
             ".MuiDataGrid-pinnedColumnHeaders--right": {
               borderLeft: "1px solid #e0e0e0 !important",
+            },
+            // Add pinned border elements that will be absolutely positioned and guaranteed visible
+            "& .MuiDataGrid-pinnedColumns, & .MuiDataGrid-pinnedColumnHeaders": {
+              position: "relative",
+            },
+            "& .MuiDataGrid-pinnedColumns--left::after, & .MuiDataGrid-pinnedColumnHeaders--left::after": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: "2px",
+              backgroundColor: "#bdbdbd",
+              boxShadow: "1px 0 3px rgba(0,0,0,0.1)", 
+              zIndex: 9999,
+              pointerEvents: "none"
+            },
+            "& .MuiDataGrid-pinnedColumns--right::before, & .MuiDataGrid-pinnedColumnHeaders--right::before": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: 0,
+              bottom: 0,
+              width: "2px",
+              backgroundColor: "#bdbdbd",
+              boxShadow: "-1px 0 3px rgba(0,0,0,0.1)",
+              zIndex: 9999,
+              pointerEvents: "none"
             },
           }}
         />
