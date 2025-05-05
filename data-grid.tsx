@@ -1657,36 +1657,7 @@ export default function SimpleDataGrid() {
 
       {/* Data Grid */}
       <Box sx={{ height: 600, width: "100%", position: "relative" }}>
-        {/* Fixed-position dividers that will always be on top */}
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            left: 50, // Width of the checkbox column
-            width: "3px",
-            backgroundColor: "#bdbdbd",
-            opacity: 0.8,
-            zIndex: 9999,
-            pointerEvents: "none", // Allow clicking through
-            boxShadow: "1px 0 3px rgba(0,0,0,0.1)",
-          }}
-        />
-        {/* Right side divider - positioned at width - 50px (actions column width) */}
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            bottom: 0,
-            right: 50, // Width of the actions column
-            width: "3px",
-            backgroundColor: "#bdbdbd",
-            opacity: 0.8,
-            zIndex: 9999,
-            pointerEvents: "none", // Allow clicking through
-            boxShadow: "-1px 0 3px rgba(0,0,0,0.1)",
-          }}
-        />
+        {/* Removed fixed-position dividers in favor of dynamic ones in the DataGrid sx prop */}
         <GridComponent
           rows={filteredRows}
           columns={columns}
@@ -1945,6 +1916,31 @@ export default function SimpleDataGrid() {
               width: "2px",
               backgroundColor: "#bdbdbd",
               boxShadow: "-1px 0 3px rgba(0,0,0,0.1)",
+              zIndex: 9999,
+              pointerEvents: "none"
+            },
+            // Dynamic pinned column dividers with better styling
+            "& .MuiDataGrid-pinnedColumns--left::after, & .MuiDataGrid-pinnedColumnHeaders--left::after": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              right: 0,
+              height: "calc(100% - 56px)", // Stop before pagination (56px is pagination height)
+              width: "1px", // Thinner divider
+              backgroundColor: "#bdbdbd",
+              boxShadow: "1px 0 2px rgba(0,0,0,0.05)", 
+              zIndex: 9999,
+              pointerEvents: "none"
+            },
+            "& .MuiDataGrid-pinnedColumns--right::before, & .MuiDataGrid-pinnedColumnHeaders--right::before": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: 0,
+              height: "calc(100% - 56px)", // Stop before pagination (56px is pagination height)
+              width: "1px", // Thinner divider
+              backgroundColor: "#bdbdbd",
+              boxShadow: "-1px 0 2px rgba(0,0,0,0.05)",
               zIndex: 9999,
               pointerEvents: "none"
             },
