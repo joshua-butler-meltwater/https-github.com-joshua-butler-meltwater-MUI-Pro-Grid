@@ -1178,67 +1178,84 @@ export default function SimpleDataGrid() {
   const [selectedContinents, setSelectedContinents] = useState<string[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<CountryData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  // State for selected rows
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  // State for selected rows - changed from string[] to GridRowId[]
+  const [selectionModel, setSelectionModel] = useState<any[]>([]);
 
   const open = Boolean(filterAnchorEl);
 
   // Define column groups inside the component to access selectedRows state
   const columns = [
+    // Custom checkbox selection column
     {
-      field: "selection",
-      headerName: "",
-      width: 52,
+      field: 'selection',
+      headerName: '',
+      width: 50,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
+      headerAlign: 'center',
+      align: 'center',
       pinnable: true,
-      // Use the correct syntax and value format for pinning in MUI DataGridPro
       columnPinningPosition: 'left',
-      renderHeader: (params: any) => {
-        const apiRef = params.api;
-        const rowCount = apiRef?.getRowCount ? apiRef.getRowCount() : 0;
-        const selectedRowCount = selectedRows.length;
+      renderHeader: (params) => {
+        // Get row count directly from filteredRows instead of using apiRef
+        const rowCount = filteredRows.length;
+        const selectedRowCount = selectionModel.length;
         
         return (
           <Checkbox 
-            size="small"
             indeterminate={selectedRowCount > 0 && selectedRowCount < rowCount}
             checked={rowCount > 0 && selectedRowCount === rowCount}
             onChange={(event) => {
-              if (event.target.checked && apiRef?.getAllRowIds) {
-                const allRowIds = apiRef.getAllRowIds();
-                setSelectedRows(allRowIds);
+              if (selectedRowCount === rowCount) {
+                setSelectionModel([]);
               } else {
-                setSelectedRows([]);
+                // Get all row IDs directly from filteredRows
+                const allRowIds = filteredRows.map(row => row.id);
+                setSelectionModel(allRowIds);
               }
             }}
+            sx={{
+              '&.Mui-checked': { color: '#1D9F9F' },
+              '&.MuiCheckbox-indeterminate': { color: '#1D9F9F' },
+              padding: 0,
+            }}
+            size="small"
           />
         );
       },
-      renderCell: (params: any) => (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%' }}>
+      renderCell: (params) => (
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          width: '100%',
+          height: '100%'
+        }}>
           <Checkbox 
-            size="small" 
-            checked={selectedRows.includes(params.id)}
+            checked={selectionModel.includes(params.id)}
             onChange={(event) => {
-              const newSelectedRows = event.target.checked
-                ? [...selectedRows, params.id]
-                : selectedRows.filter(id => id !== params.id);
-              setSelectedRows(newSelectedRows);
+              const newSelectionModel = [...selectionModel];
+              if (event.target.checked) {
+                newSelectionModel.push(params.id);
+              } else {
+                const index = newSelectionModel.indexOf(params.id);
+                if (index > -1) {
+                  newSelectionModel.splice(index, 1);
+                }
+              }
+              setSelectionModel(newSelectionModel);
             }}
             sx={{
-              '&.Mui-checked': {
-                color: '#1D9F9F',
-              },
-              '&.MuiCheckbox-indeterminate': {
-                color: '#1D9F9F',
-              },
-            }} 
+              '&.Mui-checked': { color: '#1D9F9F' },
+              padding: 0,
+            }}
+            size="small"
           />
         </Box>
       ),
     },
+    
     // Basic Information
     { field: "continent", headerName: "Continent", width: 150 },
     { field: "country", headerName: "Country", width: 180 },
@@ -1407,12 +1424,12 @@ export default function SimpleDataGrid() {
 
   // Handle row selection
   const handleSelectionModelChange = (newSelectionModel: any) => {
-    setSelectedRows(newSelectionModel);
+    setSelectionModel(newSelectionModel);
   };
 
   // Clear selection
   const handleClearSelection = () => {
-    setSelectedRows([]);
+    setSelectionModel([]);
   };
 
   return (
@@ -1422,10 +1439,12 @@ export default function SimpleDataGrid() {
         overflow: "hidden",
         fontFamily: "Helvetica, Arial, sans-serif",
         position: "relative",
+        boxShadow: "0px 8px 30px -15px rgba(0,0,0,0.15), 0px 15px 40px -20px rgba(0,0,0,0.1)",
+        borderRadius: "8px",
       }}
     >
       {/* Selection Header - Slides down when items are selected */}
-      <Slide direction="down" in={selectedRows.length > 0} mountOnEnter unmountOnExit>
+      <Slide direction="down" in={selectionModel.length > 0} mountOnEnter unmountOnExit>
         <Paper 
           elevation={0}
           sx={{
@@ -1452,7 +1471,7 @@ export default function SimpleDataGrid() {
           </IconButton>
           
           <Typography sx={{ color: "#00726E", fontWeight: "medium", ml: 1.5 }}>
-            {selectedRows.length} {selectedRows.length === 1 ? "item" : "items"} selected
+            {selectionModel.length} {selectionModel.length === 1 ? "item" : "items"} selected
           </Typography>
           
           {/* Use flex-grow to push the action buttons to the right */}
@@ -1664,6 +1683,25 @@ export default function SimpleDataGrid() {
           getEstimatedRowHeight={() => 100}
           density="standard"
           onRowSelectionModelChange={handleSelectionModelChange}
+          components={{
+            BaseRoot: (props) => (
+              <div
+                {...props}
+                style={{
+                  ...props.style,
+                  '--pinned-border': '1px solid #e0e0e0',
+                  '--pinned-shadow': '0px 0px 4px 0px rgba(0,0,0,0.1)',
+                }}
+              />
+            )
+          }}
+          componentsProps={{
+            basePopper: {
+              sx: {
+                zIndex: 1000,
+              }
+            },
+          }}
           sx={{
             fontFamily: "Helvetica, Arial, sans-serif",
             height: "100%", 
@@ -1678,27 +1716,46 @@ export default function SimpleDataGrid() {
               minHeight: "52px !important",
               maxHeight: "52px !important",
               lineHeight: "52px",
-              borderBottom: "1px solid #e0e0e0",
+              borderBottom: "1px solid #e0e0e0 !important", 
               "& .MuiDataGrid-columnHeaderTitle": {
                 fontWeight: "bold",
                 fontFamily: "Helvetica, Arial, sans-serif",
                 fontSize: "14px",
               },
             },
+            // Target the column separator elements with direct attribute selectors to override inline styles
+            "& .MuiDataGrid-columnSeparator": {
+              visibility: "visible", // Make sure the separators are visible
+            },
+            "& .MuiDataGrid-iconSeparator": {
+              color: "#e0e0e0", // Light gray color that matches MUI's default
+            },
+            // Remove any custom overrides that might be hiding the separators
+            "& .MuiDataGrid-columnSeparator--sideRight::after": {
+              display: "unset",
+            },
+            // Remove vertical borders that might interfere with column separators
+            "& .MuiDataGrid-cell, & .MuiDataGrid-columnHeader": {
+              border: "none",
+              borderBottom: "1px solid #e0e0e0",
+            },
             "& .MuiDataGrid-row": {
               maxHeight: "none !important",
               lineHeight: "normal",
+              margin: 0, // Remove any margin between rows
             },
             "& .MuiDataGrid-cell": {
               overflow: "visible !important",
               whiteSpace: "normal",
-              borderBottom: "1px solid #f8f8f8",
+              borderBottom: "1px solid #e0e0e0", // Darker row dividers for better visibility
+              borderTop: "none", // Remove any top border
               fontFamily: "Helvetica, Arial, sans-serif",
               padding: 1,
               maxHeight: "none !important",
               display: "flex",
               alignItems: "center", 
               justifyContent: "flex-start",
+              margin: 0, // Remove any margin
               "& .MuiBox-root": {
                 display: "flex",
                 alignItems: "center",
@@ -1708,6 +1765,15 @@ export default function SimpleDataGrid() {
               "& p, & span, & div:not(.MuiBox-root)": {
                 margin: 0,
                 alignSelf: "center",
+              }
+            },
+            "& .MuiDataGrid-virtualScroller": {
+              marginTop: "0 !important", // Remove gap after the header
+              "& .MuiDataGrid-virtualScrollerContent": {
+                 marginBottom: 0,
+              },
+              "& .MuiDataGrid-virtualScrollerRenderZone": {
+                gap: 0, // Remove gaps between rows
               }
             },
             "& .MuiDataGrid-cell:focus-within": {
@@ -1741,6 +1807,40 @@ export default function SimpleDataGrid() {
               "& > div:first-of-type": {
                 marginRight: 4,
               }
+            },
+            // Add borders to pinned columns with MUI's medium soft shadow
+            "& .MuiDataGrid-pinnedColumnHeaders, & .MuiDataGrid-pinnedColumns": {
+              "&.MuiDataGrid-pinnedColumns--left": {
+                borderRight: "1px solid #e0e0e0",
+                boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.1), 0px 6px 10px 0px rgba(0,0,0,0.04), 0px 1px 18px 0px rgba(0,0,0,0.02)",
+              },
+              "&.MuiDataGrid-pinnedColumns--right": {
+                borderLeft: "1px solid #e0e0e0",
+                boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.1), 0px 6px 10px 0px rgba(0,0,0,0.04), 0px 1px 18px 0px rgba(0,0,0,0.02)",
+              }
+            },
+            "& .MuiDataGrid-pinnedColumnHeaders": {
+              "&.MuiDataGrid-pinnedColumnHeaders--left": {
+                borderRight: "1px solid #e0e0e0",
+                boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.1), 0px 6px 10px 0px rgba(0,0,0,0.04), 0px 1px 18px 0px rgba(0,0,0,0.02)",
+              },
+              "&.MuiDataGrid-pinnedColumnHeaders--right": {
+                borderLeft: "1px solid #e0e0e0",
+                boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.1), 0px 6px 10px 0px rgba(0,0,0,0.04), 0px 1px 18px 0px rgba(0,0,0,0.02)",
+              }
+            },
+            // Add visible borders to pinned columns with !important to override any inline styles
+            ".MuiDataGrid-pinnedColumns--left": {
+              borderRight: "1px solid #e0e0e0 !important",
+            },
+            ".MuiDataGrid-pinnedColumns--right": {
+              borderLeft: "1px solid #e0e0e0 !important",
+            },
+            ".MuiDataGrid-pinnedColumnHeaders--left": {
+              borderRight: "1px solid #e0e0e0 !important",
+            },
+            ".MuiDataGrid-pinnedColumnHeaders--right": {
+              borderLeft: "1px solid #e0e0e0 !important",
             },
           }}
         />
