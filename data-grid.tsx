@@ -1182,6 +1182,25 @@ export default function SimpleDataGrid() {
   const [selectionModel, setSelectionModel] = useState<any[]>([]);
 
   const open = Boolean(filterAnchorEl);
+  
+  // Custom cell renderer for truncating cell text to 2 lines
+  const TruncatedCell = (props: any) => {
+    const { value } = props;
+    return (
+      <div 
+        style={{ 
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          lineHeight: '1.3em',
+          maxHeight: '2.6em' // Approximately 2 lines
+        }}>
+        {value}
+      </div>
+    );
+  };
 
   // Define column groups inside the component to access selectedRows state
   const columns = [
@@ -1256,36 +1275,36 @@ export default function SimpleDataGrid() {
       ),
     },
     
-    // Basic Information
-    { field: "continent", headerName: "Continent", width: 150 },
-    { field: "country", headerName: "Country", width: 180 },
-    { field: "capital", headerName: "Capital", width: 150 },
-    { field: "population", headerName: "Population", width: 150 },
-    { field: "area", headerName: "Area", width: 150 },
+    // Basic Information - Using custom cell renderer for all text columns
+    { field: "continent", headerName: "Continent", width: 150, renderCell: TruncatedCell },
+    { field: "country", headerName: "Country", width: 180, renderCell: TruncatedCell },
+    { field: "capital", headerName: "Capital", width: 150, renderCell: TruncatedCell },
+    { field: "population", headerName: "Population", width: 150, renderCell: TruncatedCell },
+    { field: "area", headerName: "Area", width: 150, renderCell: TruncatedCell },
 
     // Political Information
-    { field: "governmentType", headerName: "Government Type", width: 220 },
-    { field: "headOfState", headerName: "Head of State", width: 200 },
-    { field: "headOfGovernment", headerName: "Head of Government", width: 200 },
-    { field: "independence", headerName: "Independence/Formation", width: 200 },
-    { field: "adminDivisions", headerName: "Administrative Divisions", width: 220 },
+    { field: "governmentType", headerName: "Government Type", width: 220, renderCell: TruncatedCell },
+    { field: "headOfState", headerName: "Head of State", width: 200, renderCell: TruncatedCell },
+    { field: "headOfGovernment", headerName: "Head of Government", width: 200, renderCell: TruncatedCell },
+    { field: "independence", headerName: "Independence/Formation", width: 200, renderCell: TruncatedCell },
+    { field: "adminDivisions", headerName: "Administrative Divisions", width: 220, renderCell: TruncatedCell },
 
     // Economic Information
-    { field: "gdpTotal", headerName: "GDP (Total)", width: 150 },
-    { field: "gdpPerCapita", headerName: "GDP per Capita", width: 150 },
-    { field: "currency", headerName: "Currency", width: 150 },
-    { field: "majorIndustries", headerName: "Major Industries", width: 250 },
-    { field: "majorExportsImports", headerName: "Major Exports/Imports", width: 300 },
-    { field: "unemploymentRate", headerName: "Unemployment Rate", width: 170 },
-    { field: "giniCoefficient", headerName: "Gini Coefficient", width: 150 },
+    { field: "gdpTotal", headerName: "GDP (Total)", width: 150, renderCell: TruncatedCell },
+    { field: "gdpPerCapita", headerName: "GDP per Capita", width: 150, renderCell: TruncatedCell },
+    { field: "currency", headerName: "Currency", width: 150, renderCell: TruncatedCell },
+    { field: "majorIndustries", headerName: "Major Industries", width: 250, renderCell: TruncatedCell },
+    { field: "majorExportsImports", headerName: "Major Exports/Imports", width: 300, renderCell: TruncatedCell },
+    { field: "unemploymentRate", headerName: "Unemployment Rate", width: 170, renderCell: TruncatedCell },
+    { field: "giniCoefficient", headerName: "Gini Coefficient", width: 150, renderCell: TruncatedCell },
 
     // Social Information
-    { field: "hdi", headerName: "Human Development Index", width: 200 },
-    { field: "lifeExpectancy", headerName: "Life Expectancy", width: 150 },
-    { field: "literacyRate", headerName: "Literacy Rate", width: 150 },
-    { field: "majorReligions", headerName: "Major Religions", width: 300 },
-    { field: "majorEthnicGroups", headerName: "Major Ethnic Groups", width: 300 },
-    { field: "urbanRuralRatio", headerName: "Urban/Rural Ratio", width: 150 },
+    { field: "hdi", headerName: "Human Development Index", width: 200, renderCell: TruncatedCell },
+    { field: "lifeExpectancy", headerName: "Life Expectancy", width: 150, renderCell: TruncatedCell },
+    { field: "literacyRate", headerName: "Literacy Rate", width: 150, renderCell: TruncatedCell },
+    { field: "majorReligions", headerName: "Major Religions", width: 300, renderCell: TruncatedCell },
+    { field: "majorEthnicGroups", headerName: "Major Ethnic Groups", width: 300, renderCell: TruncatedCell },
+    { field: "urbanRuralRatio", headerName: "Urban/Rural Ratio", width: 150, renderCell: TruncatedCell },
     // Actions column
     {
       field: "actions",
@@ -1562,6 +1581,7 @@ export default function SimpleDataGrid() {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
+              position: "relative",
               ...(selectedContinents.length > 0 && {
                 backgroundColor: "#E0F1F2",
                 color: "#00726E",
@@ -1572,6 +1592,28 @@ export default function SimpleDataGrid() {
             }}
           >
             <FilterAlt sx={{ fontSize: "20px" }} />
+            {selectedContinents.length > 0 && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: -4,
+                  right: -4,
+                  bgcolor: "#00726E",
+                  color: "white",
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  fontSize: "11px",
+                  fontWeight: "bold",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "1px solid white",
+                }}
+              >
+                {selectedContinents.length}
+              </Box>
+            )}
           </IconButton>
           <Menu
             anchorEl={filterAnchorEl}
@@ -1592,6 +1634,10 @@ export default function SimpleDataGrid() {
                       checked={selectedContinents.includes(continent)}
                       onChange={() => handleContinentToggle(continent)}
                       size="small"
+                      sx={{
+                        '&.Mui-checked': { color: '#1D9F9F' },
+                        '&:hover': { backgroundColor: 'rgba(29, 159, 159, 0.04)' },
+                      }}
                     />
                   }
                   label={continent}
@@ -1746,13 +1792,15 @@ export default function SimpleDataGrid() {
               margin: 0, // Remove any margin between rows
             },
             "& .MuiDataGrid-cell": {
-              overflow: "visible !important",
+              overflow: "hidden !important", // Changed from visible to hidden
               whiteSpace: "normal",
               borderBottom: "1px solid #e0e0e0", // Darker row dividers for better visibility
               borderTop: "none", // Remove any top border
               fontFamily: "Helvetica, Arial, sans-serif",
               padding: 1,
-              maxHeight: "none !important",
+              // Set a fixed height for all cells with display: -webkit-box for line clamping
+              height: "auto !important",
+              maxHeight: "72px !important", // Limit maximum height
               display: "flex",
               alignItems: "center", 
               justifyContent: "flex-start",
@@ -1766,6 +1814,13 @@ export default function SimpleDataGrid() {
               "& p, & span, & div:not(.MuiBox-root)": {
                 margin: 0,
                 alignSelf: "center",
+                // Apply text truncation with ellipsis after 2 lines
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                width: "100%",
               }
             },
             "& .MuiDataGrid-virtualScroller": {
