@@ -364,6 +364,51 @@ export const styles = {
       pointerEvents: "none"
     },
   },
+  
+  // SelectableList styles
+  selectableList: {
+    container: {
+      padding: '8px 0',
+    },
+    divider: {
+      height: '1px',
+      backgroundColor: '#E0E0E0',
+      margin: '7px 0 2px 0',
+    },
+    header: {
+      height: '36px',
+      padding: '0 16px',
+      fontFamily: 'Helvetica, Arial, sans-serif',
+      fontSize: '12px',
+      fontWeight: 700,
+      lineHeight: '16px',
+      textTransform: 'uppercase',
+      color: '#616161',
+    },
+    item: {
+      base: {
+        minHeight: '36px',
+        padding: '8px 16px',
+        fontFamily: 'Helvetica, Arial, sans-serif',
+        fontSize: '14px',
+        lineHeight: '18px',
+        color: '#212121',
+        cursor: 'pointer',
+      },
+      selected: {
+        borderLeft: `3px solid ${colors.teal.main}`,
+        backgroundColor: colors.teal.light,
+        fontWeight: 'bold',
+      },
+      unselected: {
+        backgroundColor: 'white',
+        fontWeight: 'normal',
+        '&:hover': {
+          backgroundColor: 'rgba(33,33,33,0.04)',
+        },
+      },
+    },
+  },
 };
 
 // Types for the component props

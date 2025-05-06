@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, TextField } from "@mui/material";
-import { Search } from "@mui/icons-material";
+import { Box, TextField, IconButton } from "@mui/material";
+import { Search, Clear } from "@mui/icons-material";
 import { styles, colors } from '../../styles/data-grid-styles';
 
 interface SearchBarProps {
@@ -19,6 +19,16 @@ const SearchBar = ({
   handleSearchChange,
   setSearchFocused
 }: SearchBarProps) => {
+  // Handle clear button click
+  const handleClearSearch = () => {
+    // Create a synthetic event to pass to handleSearchChange
+    const event = {
+      target: { value: '' },
+    } as React.ChangeEvent<HTMLInputElement>;
+    
+    handleSearchChange(event);
+  };
+
   return (
     <Box
       sx={{
@@ -49,6 +59,22 @@ const SearchBar = ({
           InputProps={{
             disableUnderline: true,
             style: { fontFamily: "Helvetica, Arial, sans-serif" },
+            endAdornment: searchText ? (
+              <IconButton 
+                size="small" 
+                onClick={handleClearSearch}
+                sx={{ 
+                  padding: '4px',
+                  opacity: 0.7,
+                  '&:hover': {
+                    opacity: 1,
+                    backgroundColor: 'transparent'
+                  }
+                }}
+              >
+                <Clear fontSize="small" />
+              </IconButton>
+            ) : null,
           }}
           sx={{
             height: "100%",

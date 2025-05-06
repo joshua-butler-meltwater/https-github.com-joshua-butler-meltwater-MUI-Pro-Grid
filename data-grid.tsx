@@ -28,6 +28,7 @@ import ActionsCell from "./components/data-grid/ActionsCell"
 import SelectionHeader from "./components/data-grid/SelectionHeader"
 import DataGridToolbar from "./components/data-grid/DataGridToolbar"
 import SearchBar from "./components/data-grid/SearchBar"
+import SelectableList from "./components/data-grid/SelectableList"
 
 // Create a variable to determine which DataGrid component to use
 // In production with a valid license, use DataGridPro
@@ -230,88 +231,129 @@ export default function SimpleDataGrid() {
 
   return (
     <Paper sx={styles.paperContainer}>
-      {/* Selection Header - Extracted to component */}
-      <SelectionHeader
-        selectionCount={selectionModel.length}
-        onClearSelection={handleClearSelection}
-        onDownload={() => console.log('Download selected')}
-        onEdit={() => console.log('Edit selected')}
-        onDelete={() => console.log('Delete selected')}
-      />
-
-      {/* Main header - Extracted to component */}
-      <DataGridToolbar
-        title="World Geography"
-        tooltip="This table displays geographic information about countries around the world, organized by continent."
-        showSearchBar={showSearchBar}
-        toggleSearchBar={toggleSearchBar}
-        filterAnchorEl={filterAnchorEl}
-        handleFilterClick={handleFilterClick}
-        handleFilterClose={handleFilterClose}
-        selectedContinents={selectedContinents}
-        continents={continents}
-        handleContinentToggle={handleContinentToggle}
-      />
-
-      {/* Search/Filter row - Extracted to component */}
-      {showSearchBar && (
-        <SearchBar
-          searchText={searchText}
-          searchFocused={searchFocused}
-          handleSearchChange={handleSearchChange}
-          setSearchFocused={setSearchFocused}
-        />
-      )}
-
-      {/* Data Grid */}
-      <Box sx={styles.dataGridContainer}>
-        <GridComponent
-          rows={filteredRows}
-          columns={columns}
-          initialState={{
-            pagination: {
-              paginationModel: { page: 0, pageSize: 25 },
-            },
-            columns: {
-              columnVisibilityModel: {
-                actions: true,
-              },
-            },
-            pinnedColumns: {
-              left: ['selection'],
-              right: ['actions']
-            }
-          }}
-          pageSizeOptions={[5, 10, 25, 50, 100]}
-          pagination
-          paginationMode="client"
-          checkboxSelection={false}
-          disableRowSelectionOnClick
-          getRowHeight={() => 'auto'}
-          getEstimatedRowHeight={() => 100}
-          density="standard"
-          onRowSelectionModelChange={handleSelectionModelChange}
-          components={{
-            BaseRoot: (props) => (
-              <div
-                {...props}
-                style={{
-                  ...props.style,
-                  '--pinned-border': `2px solid ${colors.pinnedDivider}`,
-                  '--pinned-shadow': '0px 0px 6px 0px rgba(0,0,0,0.15)',
-                }}
-              />
-            )
-          }}
-          componentsProps={{
-            basePopper: {
-              sx: {
-                zIndex: 1000,
+      {/* Layout container for side filter and main content */}
+      <Box sx={{ display: 'flex' }}>
+        {/* Side Filter Panel */}
+        <Box sx={{ 
+          width: '200px',
+          minWidth: '200px', 
+          flexShrink: 0,
+          borderRight: '1px solid #e0e0e0',
+          backgroundColor: 'white',
+          boxShadow: 'none'
+        }}>
+          <SelectableList 
+            items={['All', ...continents]} 
+            header="Filter By Region"
+            defaultSelected="All"
+            onSelectionChange={(selected) => {
+              if (selected === 'All') {
+                // Show all continents (no filter)
+                setSelectedContinents([]);
+                filterData(searchText, []);
+              } else {
+                // Filter by the selected continent only
+                setSelectedContinents([selected]);
+                filterData(searchText, [selected]);
               }
-            },
-          }}
-          sx={styles.dataGridRoot}
-        />
+            }}
+          />
+        </Box>
+        
+        {/* Main content area with header, search bar, and data grid */}
+        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+          {/* Selection Header - Positioned within the main content area */}
+          <SelectionHeader
+            selectionCount={selectionModel.length}
+            onClearSelection={handleClearSelection}
+            onDownload={() => console.log('Download selected')}
+            onEdit={() => console.log('Edit selected')}
+            onDelete={() => console.log('Delete selected')}
+          />
+          
+          {/* Main header - Extracted to component */}
+          <DataGridToolbar
+            title="World Geography"
+            tooltip="This table displays geographic information about countries around the world, organized by continent."
+            showSearchBar={showSearchBar}
+            toggleSearchBar={toggleSearchBar}
+            filterAnchorEl={filterAnchorEl}
+            handleFilterClick={handleFilterClick}
+            handleFilterClose={handleFilterClose}
+            selectedContinents={selectedContinents}
+            continents={continents}
+            handleContinentToggle={handleContinentToggle}
+          />
+
+          {/* Search/Filter row - Extracted to component */}
+          {showSearchBar && (
+            <SearchBar
+              searchText={searchText}
+              searchFocused={searchFocused}
+              handleSearchChange={handleSearchChange}
+              setSearchFocused={setSearchFocused}
+            />
+          )}
+
+          {/* Data Grid */}
+          <Box sx={{
+            ...styles.dataGridContainer, 
+            overflow: 'auto',
+            width: '100%'
+          }}>
+            <GridComponent
+              rows={filteredRows}
+              columns={columns}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: 25 },
+                },
+                columns: {
+                  columnVisibilityModel: {
+                    actions: true,
+                  },
+                },
+                pinnedColumns: {
+                  left: ['selection'],
+                  right: ['actions']
+                }
+              }}
+              pageSizeOptions={[5, 10, 25, 50, 100]}
+              pagination
+              paginationMode="client"
+              checkboxSelection={false}
+              disableRowSelectionOnClick
+              getRowHeight={() => 'auto'}
+              getEstimatedRowHeight={() => 100}
+              density="standard"
+              onRowSelectionModelChange={handleSelectionModelChange}
+              components={{
+                BaseRoot: (props) => (
+                  <div
+                    {...props}
+                    style={{
+                      ...props.style,
+                      '--pinned-border': `2px solid ${colors.pinnedDivider}`,
+                      '--pinned-shadow': '0px 0px 6px 0px rgba(0,0,0,0.15)',
+                    }}
+                  />
+                )
+              }}
+              componentsProps={{
+                basePopper: {
+                  sx: {
+                    zIndex: 1000,
+                  }
+                },
+              }}
+              sx={{
+                ...styles.dataGridRoot, 
+                width: 'auto', // Allow the grid to be wider than its container
+                minWidth: '100%' // Ensure it fills the container at minimum
+              }}
+            />
+          </Box>
+        </Box>
       </Box>
 
       {/* Country Detail Modal */}
@@ -332,7 +374,17 @@ export default function SimpleDataGrid() {
               </Box>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleCloseModal}>Close</Button>
+              <Button 
+                onClick={handleCloseModal}
+                sx={{ 
+                  color: colors.teal.main,
+                  '&:hover': {
+                    backgroundColor: colors.teal.light,
+                  }
+                }}
+              >
+                Close
+              </Button>
             </DialogActions>
           </>
         )}

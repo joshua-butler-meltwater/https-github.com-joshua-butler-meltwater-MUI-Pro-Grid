@@ -26,7 +26,14 @@ const SelectionHeader = ({
     <Slide direction="down" in={selectionCount > 0} mountOnEnter unmountOnExit>
       <Paper 
         elevation={0}
-        sx={styles.selectionHeader}
+        sx={{
+          ...styles.selectionHeader,
+          width: '100%', // Only cover the width of the main content
+          position: "absolute",
+          left: 0,
+          right: 0,
+          borderRadius: 0, // Remove rounded corners
+        }}
       >
         <IconButton 
           size="small"
