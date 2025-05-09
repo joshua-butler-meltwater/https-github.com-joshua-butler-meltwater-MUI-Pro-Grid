@@ -230,6 +230,12 @@ export const styles = {
     "& .MuiTablePagination-root": {
       fontFamily: "Helvetica, Arial, sans-serif",
       borderTop: `1px solid ${colors.border}`,
+      "& .MuiTablePagination-selectLabel": {
+        marginBottom: 0,
+        display: "flex",
+        alignItems: "center",
+        paddingRight: "24px !important",
+      },
     },
     "& .MuiTablePagination-selectLabel": {
       marginBottom: 0,
@@ -253,6 +259,9 @@ export const styles = {
       justifyContent: "space-between",
       "& > div:first-of-type": {
         marginRight: 4,
+      },
+      "& .MuiTablePagination-selectLabel": {
+        paddingRight: "24px"
       }
     },
     // Pinned columns
@@ -363,6 +372,46 @@ export const styles = {
       zIndex: 10000, // Increased z-index to ensure it's on top
       pointerEvents: "none"
     },
+  },
+  
+  // Sidebar container styles
+  sidebarContainer: {
+    width: '200px',
+    minWidth: '200px', 
+    flexShrink: 0,
+    borderRight: '1px solid #e0e0e0',
+    backgroundColor: 'white',
+    boxShadow: 'none'
+  },
+  
+  // Dialog action button styles
+  dialogActionButton: {
+    color: colors.teal.main,
+    '&:hover': {
+      backgroundColor: colors.teal.light,
+    }
+  },
+  
+  // Column headers with consistent height
+  columnHeaders: {
+    height: '52px !important',
+    minHeight: '52px !important',
+  },
+  
+  // Footer container with pagination
+  footerContainer: {
+    position: 'relative',
+    zIndex: 9,
+    '& .MuiTablePagination-selectLabel': {
+      paddingRight: 0,
+      marginLeft: '24px',
+    },
+  },
+  
+  // Small checkbox styling
+  smallCheckbox: {
+    '&.Mui-checked': { color: colors.teal.main },
+    padding: 0,
   },
   
   // SelectableList styles

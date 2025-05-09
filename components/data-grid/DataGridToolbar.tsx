@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Toolbar,
   Typography,
@@ -8,9 +8,9 @@ import {
   Menu,
   MenuItem,
   FormControlLabel,
-  Checkbox
+  Checkbox,
 } from "@mui/material";
-import { Search, Info as InfoOutlined, FilterAlt } from "@mui/icons-material";
+import { Search, Info as InfoOutlined, FilterAlt, Sort } from "@mui/icons-material";
 import { styles, colors } from '../../styles/data-grid-styles';
 
 interface DataGridToolbarProps {
@@ -24,6 +24,7 @@ interface DataGridToolbarProps {
   selectedContinents: string[];
   continents: string[];
   handleContinentToggle: (continent: string) => void;
+  onSortChange: (field: string, direction: 'asc' | 'desc') => void;
 }
 
 /**
@@ -39,9 +40,40 @@ const DataGridToolbar = ({
   handleFilterClose,
   selectedContinents,
   continents,
-  handleContinentToggle
+  handleContinentToggle,
+  onSortChange
 }: DataGridToolbarProps) => {
   const open = Boolean(filterAnchorEl);
+  const [sortField, setSortField] = useState('continent'); // Default to continent
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
+  
+  // Initialize sorting on component mount
+  useEffect(() => {
+    onSortChange(sortField, sortDirection);
+  }, []);
+
+  const handleSortClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setSortAnchorEl(event.currentTarget);
+  };
+
+  const handleSortClose = () => {
+    setSortAnchorEl(null);
+  };
+
+  const handleSortFieldChange = (field: string) => {
+    setSortField(field);
+    onSortChange(field, sortDirection);
+    handleSortClose();
+  };
+
+  const toggleSortDirection = () => {
+    const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    setSortDirection(newDirection);
+    if (sortField) {
+      onSortChange(sortField, newDirection);
+    }
+  };
   
   return (
     <Toolbar sx={styles.toolbar}>
@@ -63,13 +95,14 @@ const DataGridToolbar = ({
       </Box>
 
       {/* Right side icons */}
-      <Box sx={{ display: "flex", gap: 1 }}>
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
         <IconButton
           onClick={toggleSearchBar}
           sx={styles.actionIconButton(showSearchBar)}
         >
           <Search sx={{ fontSize: "20px" }} />
         </IconButton>
+        
         <IconButton
           onClick={handleFilterClick}
           sx={{
@@ -84,6 +117,65 @@ const DataGridToolbar = ({
             </Box>
           )}
         </IconButton>
+        
+        {/* Sort button and menu - now on the far right */}
+        <Tooltip title="Sort data">
+          <IconButton
+            onClick={handleSortClick}
+            sx={{
+              width: "36px",
+              height: "36px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              position: "relative",
+            }}
+            size="small"
+          >
+            <Sort sx={{ fontSize: "20px" }} />
+          </IconButton>
+        </Tooltip>
+        <Menu
+          anchorEl={sortAnchorEl}
+          open={Boolean(sortAnchorEl)}
+          onClose={handleSortClose}
+          PaperProps={{
+            style: {
+              maxHeight: 300,
+              width: 200,
+            },
+          }}
+        >
+          <MenuItem 
+            onClick={() => handleSortFieldChange('continent')}
+            sx={{ fontWeight: sortField === 'continent' ? 'bold' : 'normal' }}
+          >
+            Continent
+          </MenuItem>
+          <MenuItem 
+            onClick={() => handleSortFieldChange('country')}
+            sx={{ fontWeight: sortField === 'country' ? 'bold' : 'normal' }}
+          >
+            Country
+          </MenuItem>
+          <MenuItem 
+            onClick={() => handleSortFieldChange('population')}
+            sx={{ fontWeight: sortField === 'population' ? 'bold' : 'normal' }}
+          >
+            Population
+          </MenuItem>
+          <MenuItem 
+            onClick={() => handleSortFieldChange('gdpTotal')}
+            sx={{ fontWeight: sortField === 'gdpTotal' ? 'bold' : 'normal' }}
+          >
+            GDP
+          </MenuItem>
+          <MenuItem divider />
+          <MenuItem onClick={toggleSortDirection}>
+            {sortDirection === 'asc' ? 'Sort Descending' : 'Sort Ascending'}
+          </MenuItem>
+        </Menu>
+        
         <Menu
           anchorEl={filterAnchorEl}
           open={open}

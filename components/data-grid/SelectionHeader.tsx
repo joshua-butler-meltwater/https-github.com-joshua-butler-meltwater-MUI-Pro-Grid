@@ -1,6 +1,6 @@
 import React from 'react';
-import { Paper, Typography, IconButton, Box } from "@mui/material";
-import { Close, Edit, Delete, Download } from "@mui/icons-material";
+import { Paper, Typography, IconButton, Box, Tooltip } from "@mui/material";
+import { CloseOutlined, EditOutlined, DeleteOutlined, DownloadOutlined, SellOutlined, MergeOutlined, NotificationsOutlined } from "@mui/icons-material";
 import { Slide } from "@mui/material";
 import { styles, colors } from '../../styles/data-grid-styles';
 
@@ -10,6 +10,9 @@ interface SelectionHeaderProps {
   onDownload?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onSell?: () => void;
+  onMerge?: () => void;
+  onNotifications?: () => void;
 }
 
 /**
@@ -20,6 +23,9 @@ const SelectionHeader = ({
   onClearSelection,
   onDownload,
   onEdit,
+  onSell,
+  onMerge,
+  onNotifications,
   onDelete
 }: SelectionHeaderProps) => {
   return (
@@ -40,7 +46,7 @@ const SelectionHeader = ({
           sx={styles.actionButton}
           onClick={onClearSelection}
         >
-          <Close fontSize="small" />
+          <CloseOutlined fontSize="small" />
         </IconButton>
         
         <Typography sx={{ color: colors.teal.dark, fontWeight: "medium", ml: 1.5 }}>
@@ -51,27 +57,65 @@ const SelectionHeader = ({
         <Box sx={{ flex: 1 }} />
         
         <Box sx={{ display: "flex", gap: 1 }}>
-          <IconButton 
-            size="small"
-            sx={styles.actionButton}
-            onClick={onDownload}
-          >
-            <Download fontSize="small" />
-          </IconButton>
-          <IconButton 
-            size="small"
-            sx={styles.actionButton}
-            onClick={onEdit}
-          >
-            <Edit fontSize="small" />
-          </IconButton>
-          <IconButton 
-            size="small"
-            sx={styles.actionButton}
-            onClick={onDelete}
-          >
-            <Delete fontSize="small" />
-          </IconButton>
+          <Tooltip title="Assign label">
+            <IconButton 
+              size="small"
+              sx={styles.actionButton}
+              onClick={onSell}
+            >
+              <SellOutlined fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip title="Combine searches">
+            <IconButton 
+              size="small"
+              sx={styles.actionButton}
+              onClick={onMerge}
+            >
+              <MergeOutlined fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip title="Create alert">
+            <IconButton 
+              size="small"
+              sx={styles.actionButton}
+              onClick={onNotifications}
+            >
+              <NotificationsOutlined fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip title="Download">
+            <IconButton 
+              size="small"
+              sx={styles.actionButton}
+              onClick={onDownload}
+            >
+              <DownloadOutlined fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip title="Edit">
+            <IconButton 
+              size="small"
+              sx={styles.actionButton}
+              onClick={onEdit}
+            >
+              <EditOutlined fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          
+          <Tooltip title="Delete">
+            <IconButton 
+              size="small"
+              sx={styles.actionButton}
+              onClick={onDelete}
+            >
+              <DeleteOutlined fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Paper>
     </Slide>
