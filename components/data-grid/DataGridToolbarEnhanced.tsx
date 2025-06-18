@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Toolbar,
   Typography,
@@ -9,15 +9,12 @@ import {
   MenuItem,
   FormControlLabel,
   Checkbox,
-  List,
-  ListItem,
-  Paper,
 } from "@mui/material";
-import { Search, Info as InfoOutlined, FilterAlt, Sort, ViewColumn, DragIndicator } from "@mui/icons-material";
+import { Search, Info as InfoOutlined, FilterAlt, Sort, ViewColumn } from "@mui/icons-material";
 import { styles, colors } from '../../styles/data-grid-styles';
-import DraggableColumnsList from './DraggableColumnsList';
+import NativeDraggableColumnsList from './NativeDraggableColumnsList';
 
-interface DataGridToolbarProps {
+interface DataGridToolbarEnhancedProps {
   title: string;
   tooltip?: string;
   showSearchBar: boolean;
@@ -35,12 +32,14 @@ interface DataGridToolbarProps {
   onColumnVisibilityToggle: (field: string, isVisible: boolean) => void;
   columnOrder?: string[];
   onColumnOrderChange?: (newOrder: string[]) => void;
+  onResetAll?: () => void;
 }
 
 /**
- * Toolbar component for the DataGrid with title, info tooltip, search and filter buttons
+ * Enhanced Toolbar component for the DataGrid with title, info tooltip, search, filter buttons,
+ * and draggable column management
  */
-const DataGridToolbar = ({
+const DataGridToolbarEnhanced = ({
   title,
   tooltip,
   showSearchBar,
@@ -57,8 +56,9 @@ const DataGridToolbar = ({
   columnVisibility,
   onColumnVisibilityToggle,
   columnOrder = [],
-  onColumnOrderChange
-}: DataGridToolbarProps) => {
+  onColumnOrderChange,
+  onResetAll
+}: DataGridToolbarEnhancedProps) => {
   const open = Boolean(filterAnchorEl);
   const [sortField, setSortField] = useState('continent'); // Default to continent
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
@@ -78,29 +78,6 @@ const DataGridToolbar = ({
       setInternalColumnOrder(draggableColumns.map(col => col.field));
     }
   }, [columnOrder, columns]);
-  
-  // Handle drag end event
-  const handleDragEnd = (result: any) => {
-    // Dropped outside the list
-    if (!result.destination) {
-      return;
-    }
-
-    const sourceIndex = result.source.index;
-    const destinationIndex = result.destination.index;
-    
-    // Reorder the columns
-    const reorderedColumns = [...internalColumnOrder];
-    const [removed] = reorderedColumns.splice(sourceIndex, 1);
-    reorderedColumns.splice(destinationIndex, 0, removed);
-    
-    setInternalColumnOrder(reorderedColumns);
-    
-    // Notify parent component of the change
-    if (onColumnOrderChange) {
-      onColumnOrderChange(reorderedColumns);
-    }
-  };
   
   // Initialize sorting on component mount
   useEffect(() => {
@@ -136,6 +113,23 @@ const DataGridToolbar = ({
       onSortChange(sortField, newDirection);
     }
   };
+  
+  // Use useCallback to prevent unnecessary re-renders
+  const handleColumnOrderChangeCallback = useCallback((newOrder: string[]) => {
+    console.log('Column order changed in DataGridToolbarEnhanced:', newOrder);
+    setInternalColumnOrder(newOrder);
+    if (onColumnOrderChange) {
+      // Immediately propagate the change to ensure it persists
+      onColumnOrderChange(newOrder);
+    }
+  }, [onColumnOrderChange]);
+  
+  // Log when column order props change
+  useEffect(() => {
+    if (columnOrder && columnOrder.length > 0) {
+      console.log('DataGridToolbarEnhanced received new columnOrder:', columnOrder);
+    }
+  }, [columnOrder]);
   
   return (
     <Toolbar sx={styles.toolbar}>
@@ -214,7 +208,10 @@ const DataGridToolbar = ({
           >
             <ViewColumn sx={{ fontSize: "20px" }} />
             {Object.values(columnVisibility).includes(false) && (
-              <Box sx={styles.filterBadge}>
+              <Box sx={{ 
+                ...styles.filterBadge,
+                backgroundColor: colors.teal.main, // Use the teal color for consistency
+              }}>
                 {Object.values(columnVisibility).filter(v => v === false).length}
               </Box>
             )}
@@ -306,92 +303,16 @@ const DataGridToolbar = ({
               </Typography>
             </MenuItem>
           </Box>
-          <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-            <DragDropContext onDragEnd={handleDragEnd}>
-              <Droppable droppableId="columnList">
-                {(provided) => (
-                  <List
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    dense
-                    sx={{ 
-                      py: 0,
-                      '& .Mui-checked': { color: colors.teal.main }
-                    }}
-                  >
-                    {internalColumnOrder.map((field, index) => {
-                      const column = columns.find(col => col.field === field);
-                      if (!column) return null;
-                      
-                      return (
-                        <Draggable key={field} draggableId={field} index={index}>
-                          {(provided, snapshot) => (
-                            <ListItem
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              sx={{
-                                px: 1,
-                                py: 0,
-                                backgroundColor: snapshot.isDragging ? 'rgba(29, 159, 159, 0.08)' : 'inherit',
-                                '&:hover': { backgroundColor: 'rgba(29, 159, 159, 0.04)' },
-                                borderBottom: '1px solid #f5f5f5'
-                              }}
-                              component="div"
-                            >
-                              <Box
-                                {...provided.dragHandleProps}
-                                sx={{ 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  mr: 1,
-                                  cursor: 'grab',
-                                  color: 'text.secondary' 
-                                }}
-                              >
-                                <DragIndicator fontSize="small" />
-                              </Box>
-                              <FormControlLabel
-                                control={
-                                  <Checkbox
-                                    checked={columnVisibility[field] !== false}
-                                    onChange={() => {
-                                      onColumnVisibilityToggle(
-                                        field, 
-                                        !(columnVisibility[field] !== false)
-                                      );
-                                    }}
-                                    size="small"
-                                    sx={{
-                                      '&.Mui-checked': { color: colors.teal.main },
-                                      '&:hover': { backgroundColor: 'rgba(29, 159, 159, 0.04)' },
-                                    }}
-                                  />
-                                }
-                                label={
-                                  <Typography 
-                                    variant="body2" 
-                                    sx={{ 
-                                      fontSize: '14px', 
-                                      fontWeight: columnVisibility[field] !== false ? 500 : 400,
-                                      opacity: columnVisibility[field] !== false ? 1 : 0.7
-                                    }}
-                                  >
-                                    {column.headerName}
-                                  </Typography>
-                                }
-                                sx={{ width: "100%", m: 0 }}
-                              />
-                            </ListItem>
-                          )}
-                        </Draggable>
-                      );
-                    })}
-                    {provided.placeholder}
-                  </List>
-                )}
-              </Droppable>
-            </DragDropContext>
-          </Box>
+          
+          <NativeDraggableColumnsList 
+            columns={columns}
+            columnOrder={internalColumnOrder}
+            columnVisibility={columnVisibility}
+            onColumnOrderChange={handleColumnOrderChangeCallback}
+            onColumnVisibilityToggle={onColumnVisibilityToggle}
+            onResetAll={onResetAll}
+          />
+          
           <Box sx={{ borderTop: '1px solid #e0e0e0', pt: 1 }}>
             <MenuItem onClick={() => {
               // Reset all columns to visible
@@ -409,6 +330,11 @@ const DataGridToolbar = ({
               setInternalColumnOrder(defaultOrder);
               if (onColumnOrderChange) {
                 onColumnOrderChange(defaultOrder);
+              }
+              
+              // Call the parent's reset function if provided
+              if (onResetAll) {
+                onResetAll();
               }
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', justifyContent: 'center', color: colors.teal.main }}>
@@ -462,4 +388,4 @@ const DataGridToolbar = ({
   );
 };
 
-export default DataGridToolbar;
+export default DataGridToolbarEnhanced;

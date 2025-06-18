@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState } from "react";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import { DataGridPro } from "@mui/x-data-grid-pro";
@@ -22,7 +22,7 @@ import { countries, CountryData, getContinents, filterCountryData } from "./data
 import TruncatedCell from "./components/data-grid/TruncatedCell";
 import ActionsCell from "./components/data-grid/ActionsCell";
 import SelectionHeader from "./components/data-grid/SelectionHeader";
-import DataGridToolbarEnhanced from "./components/data-grid/DataGridToolbarEnhanced";
+import DataGridToolbar from "./components/data-grid/DataGridToolbar";
 import SearchBar from "./components/data-grid/SearchBar";
 import SelectableList from "./components/data-grid/SelectableList";
 
@@ -45,11 +45,125 @@ export default function SimpleDataGrid() {
   const [selectionModel, setSelectionModel] = useState<any[]>([]);
   const [sortConfig, setSortConfig] = useState<{field: string, direction: 'asc' | 'desc'} | null>(null);
   const [sortModel, setSortModel] = useState([{ field: 'continent', sort: 'asc' as 'asc' | 'desc' }]);
-  const [columnVisibilityModel, setColumnVisibilityModel] = useState<Record<string, boolean>>({});
-  const [columnOrderModel, setColumnOrderModel] = useState<string[]>([]);
 
-  // Define columns
-  const baseColumns = [
+  // Handler functions
+  const toggleSearchBar = () => {
+    setShowSearchBar(!showSearchBar);
+    if (showSearchBar) {
+      setSearchText("");
+      filterData("", selectedContinents);
+    }
+  };
+
+  const handleFilterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setFilterAnchorEl(event.currentTarget);
+  };
+
+  const handleFilterClose = () => {
+    setFilterAnchorEl(null);
+  };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setSearchText(value);
+    filterData(value, selectedContinents);
+  };
+
+  const handleContinentToggle = (continent: string) => {
+    const currentIndex = selectedContinents.indexOf(continent);
+    const newSelectedContinents = [...selectedContinents];
+
+    if (currentIndex === -1) {
+      newSelectedContinents.push(continent);
+    } else {
+      newSelectedContinents.splice(currentIndex, 1);
+    }
+
+    setSelectedContinents(newSelectedContinents);
+    filterData(searchText, newSelectedContinents);
+  };
+
+  const filterData = (search: string, continentFilters: string[]) => {
+    const filteredData = filterCountryData(countries, search, continentFilters);
+    setFilteredRows(filteredData);
+  };
+
+  const handleOpenModal = (country: CountryData) => {
+    setSelectedCountry(country);
+    setModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
+
+  const handleSelectionModelChange = (newSelectionModel: any) => {
+    setSelectionModel(newSelectionModel);
+  };
+
+  const handleClearSelection = () => {
+    setSelectionModel([]);
+  };
+
+  const handleToggleColumnVisibility = () => {
+    // Find the column visibility toggle in the data grid
+    const columnHeadersElement = document.querySelector('.MuiDataGrid-columnHeaders');
+    if (columnHeadersElement) {
+      // Find a column header menu button (not on the selection column)
+      const columnHeader = columnHeadersElement.querySelector('.MuiDataGrid-columnHeader:not(.MuiDataGrid-columnHeaderCheckbox)');
+      if (columnHeader) {
+        // Click the menu button to open the column menu
+        const menuButton = columnHeader.querySelector('.MuiDataGrid-menuIcon button');
+        if (menuButton) {
+          (menuButton as HTMLElement).click();
+          
+          // Wait for the menu to appear, then click the column visibility option
+          setTimeout(() => {
+            const menuItems = document.querySelectorAll('.MuiMenuItem-root');
+            menuItems.forEach(item => {
+              if (item.textContent?.includes('Hide/Show')) {
+                (item as HTMLElement).click();
+              }
+            });
+          }, 100);
+        }
+      }
+    }
+  };
+
+  const handleSort = (field: string, direction: 'asc' | 'desc') => {
+    setSortConfig({ field, direction });
+    // Update the sort model to show the arrow in the column header
+    setSortModel([{ field, sort: direction }]);
+    
+    const sortedData = [...filteredRows].sort((a, b) => {
+      let valueA = a[field as keyof CountryData];
+      let valueB = b[field as keyof CountryData];
+      
+      // Handle numerical values for proper comparison
+      if (field === 'population' || field === 'gdpTotal') {
+        valueA = typeof valueA === 'string' ? parseFloat(valueA.replace(/[^\d.-]/g, '')) : Number(valueA);
+        valueB = typeof valueB === 'string' ? parseFloat(valueB.replace(/[^\d.-]/g, '')) : Number(valueB);
+      }
+      
+      // For string values
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        return direction === 'asc' 
+          ? valueA.localeCompare(valueB)
+          : valueB.localeCompare(valueA);
+      }
+      
+      // For numeric values
+      return direction === 'asc' 
+        ? (valueA as number) - (valueB as number)
+        : (valueB as number) - (valueA as number);
+    });
+    
+    setFilteredRows(sortedData);
+  };
+
+  // Column definitions
+  const columns = [
     {
       field: 'selection',
       headerName: '',
@@ -202,218 +316,6 @@ export default function SimpleDataGrid() {
     },
   ];
 
-  // Event handlers for column management
-  const handleColumnVisibilityToggle = (field: string, isVisible: boolean) => {
-    setColumnVisibilityModel(prev => ({
-      ...prev,
-      [field]: isVisible
-    }));
-  };
-
-  const handleToggleColumnVisibility = () => {
-    // This function is for opening the native MUI column visibility panel
-    console.log('Open native column visibility panel');
-  };
-
-  const handleColumnOrderChange = (newOrder: string[]) => {
-    console.log('handleColumnOrderChange in data-grid.tsx:', newOrder);
-    
-    // Update column order state
-    setColumnOrderModel(newOrder);
-    
-    // Optionally, you could persist this to localStorage for a more permanent solution
-    try {
-      localStorage.setItem('dataGridColumnOrder', JSON.stringify(newOrder));
-    } catch (e) {
-      console.error('Failed to save column order to localStorage:', e);
-    }
-  };
-
-  // Apply column order to the columns
-  const columns = useMemo(() => {
-    console.log('Applying column order, current columnOrderModel:', columnOrderModel);
-    
-    // If no column order, use default order
-    if (!columnOrderModel.length) {
-      return baseColumns;
-    }
-
-    // Create a Map of all columns by field for quick lookup
-    const columnsMap = new Map(baseColumns.map(col => [col.field, col]));
-    
-    // Get fixed columns (selection and actions)
-    const selectionColumn = baseColumns.find(col => col.field === 'selection');
-    const actionsColumn = baseColumns.find(col => col.field === 'actions');
-    
-    // Start with selection column if it exists
-    const orderedColumns: typeof baseColumns = [];
-    if (selectionColumn) {
-      orderedColumns.push(selectionColumn);
-    }
-    
-    // Add the ordered data columns
-    columnOrderModel.forEach(field => {
-      const column = columnsMap.get(field);
-      if (column && column.field !== 'selection' && column.field !== 'actions') {
-        orderedColumns.push(column);
-      }
-    });
-    
-    // Add any columns that might not be in the order model
-    baseColumns.forEach(column => {
-      if (
-        column.field !== 'selection' && 
-        column.field !== 'actions' && 
-        !columnOrderModel.includes(column.field)
-      ) {
-        orderedColumns.push(column);
-      }
-    });
-    
-    // End with actions column if it exists
-    if (actionsColumn) {
-      orderedColumns.push(actionsColumn);
-    }
-    
-    console.log('Final ordered columns:', orderedColumns.map(col => col.field));
-    return orderedColumns;
-  }, [baseColumns, columnOrderModel]);
-
-  // Initialize column order if empty
-  useEffect(() => {
-    // First try to load from localStorage
-    try {
-      const savedOrder = localStorage.getItem('dataGridColumnOrder');
-      if (savedOrder) {
-        const parsedOrder = JSON.parse(savedOrder);
-        if (Array.isArray(parsedOrder) && parsedOrder.length > 0) {
-          console.log('Loaded column order from localStorage:', parsedOrder);
-          
-          // Validate that all column fields exist in the current columns
-          const currentFields = baseColumns
-            .filter(col => col.field !== 'selection' && col.field !== 'actions')
-            .map(col => col.field);
-          
-          // Keep only the fields that exist in current columns
-          const validOrder = parsedOrder.filter(field => currentFields.includes(field));
-          
-          // Add any fields that are not in the saved order
-          currentFields.forEach(field => {
-            if (!validOrder.includes(field)) {
-              validOrder.push(field);
-            }
-          });
-          
-          console.log('Validated column order:', validOrder);
-          setColumnOrderModel(validOrder);
-          return;
-        }
-      }
-    } catch (e) {
-      console.error('Failed to load column order from localStorage:', e);
-    }
-    
-    // If no saved order or error, use default
-    if (columnOrderModel.length === 0) {
-      // Extract fields from columns excluding selection and actions
-      const defaultColumnOrder = baseColumns
-        .filter(col => col.field !== 'selection' && col.field !== 'actions')
-        .map(col => col.field);
-      
-      console.log('Setting default column order:', defaultColumnOrder);
-      setColumnOrderModel(defaultColumnOrder);
-    }
-  }, [baseColumns]);
-
-  // Other event handlers
-  const filterData = (searchText: string, selectedContinents: string[]) => {
-    setFilteredRows(filterCountryData(countries, searchText, selectedContinents));
-  };
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newSearchText = event.target.value;
-    setSearchText(newSearchText);
-    filterData(newSearchText, selectedContinents);
-  };
-
-  const toggleSearchBar = () => {
-    setShowSearchBar(!showSearchBar);
-  };
-
-  const handleFilterClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setFilterAnchorEl(event.currentTarget);
-  };
-
-  const handleFilterClose = () => {
-    setFilterAnchorEl(null);
-  };
-
-  const handleContinentToggle = (continent: string) => {
-    const currentIndex = selectedContinents.indexOf(continent);
-    const newSelectedContinents = [...selectedContinents];
-
-    if (currentIndex === -1) {
-      newSelectedContinents.push(continent);
-    } else {
-      newSelectedContinents.splice(currentIndex, 1);
-    }
-
-    setSelectedContinents(newSelectedContinents);
-    filterData(searchText, newSelectedContinents);
-  };
-
-  const handleSort = (field: string, direction: 'asc' | 'desc') => {
-    setSortConfig({ field, direction });
-    const sortedRows = [...filteredRows].sort((a, b) => {
-      const aValue = a[field as keyof CountryData];
-      const bValue = b[field as keyof CountryData];
-      
-      if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-      if (aValue > bValue) return direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-    setFilteredRows(sortedRows);
-  };
-
-  const handleSelectionModelChange = (newSelectionModel: any) => {
-    setSelectionModel(newSelectionModel);
-  };
-
-  const handleClearSelection = () => {
-    setSelectionModel([]);
-  };
-
-  const handleOpenModal = (country: CountryData) => {
-    setSelectedCountry(country);
-    setModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setModalOpen(false);
-  };
-
-  // Function to completely reset column order and visibility
-  const resetAllColumns = () => {
-    console.log('Resetting all columns to default state');
-    
-    // Reset column visibility
-    setColumnVisibilityModel({});
-    
-    // Reset column order to default
-    const defaultColumnOrder = baseColumns
-      .filter(col => col.field !== 'selection' && col.field !== 'actions')
-      .map(col => col.field);
-    
-    setColumnOrderModel(defaultColumnOrder);
-    
-    // Clear from localStorage
-    try {
-      localStorage.removeItem('dataGridColumnOrder');
-    } catch (e) {
-      console.error('Failed to remove column order from localStorage:', e);
-    }
-  };
-
   return (
     <Paper sx={styles.paperContainer}>
       <Box sx={{ display: 'flex' }}>
@@ -446,7 +348,7 @@ export default function SimpleDataGrid() {
             onNotifications={() => console.log('Create alert for selected')}
           />
           
-          <DataGridToolbarEnhanced
+          <DataGridToolbar
             title="World Geography"
             tooltip="This table displays geographic information about countries around the world, organized by continent."
             showSearchBar={showSearchBar}
@@ -459,12 +361,6 @@ export default function SimpleDataGrid() {
             handleContinentToggle={handleContinentToggle}
             onSortChange={handleSort}
             onColumnVisibilityChange={handleToggleColumnVisibility}
-            columns={columns}
-            columnVisibility={columnVisibilityModel}
-            onColumnVisibilityToggle={handleColumnVisibilityToggle}
-            columnOrder={columnOrderModel}
-            onColumnOrderChange={handleColumnOrderChange}
-            onResetAll={resetAllColumns}
           />
 
           {showSearchBar && (
@@ -482,15 +378,16 @@ export default function SimpleDataGrid() {
             width: '100%'
           }}>
             <GridComponent
-              key={`grid-${JSON.stringify(columnOrderModel)}-${JSON.stringify(columnVisibilityModel)}`} // Force re-render when column order or visibility changes
               rows={filteredRows}
-              columns={columns as any} 
+              columns={columns as any}
               initialState={{
                 pagination: {
                   paginationModel: { page: 0, pageSize: 25 },
                 },
                 columns: {
-                  columnVisibilityModel: columnVisibilityModel,
+                  columnVisibilityModel: {
+                    actions: true,
+                  },
                 },
                 pinnedColumns: {
                   left: ['selection'],
@@ -528,7 +425,35 @@ export default function SimpleDataGrid() {
                   }
                 }
               }}
-              slots={{}}
+              components={{
+                BaseRoot: (props: any) => (
+                  <div
+                    {...props}
+                    style={{
+                      ...props.style,
+                      '--pinned-border': `2px solid ${colors.pinnedDivider}`,
+                      '--pinned-shadow': '0px 0px 6px 0px rgba(0,0,0,0.15)',
+                    }}
+                  />
+                )
+              }}
+              componentsProps={{
+                basePopper: {
+                  sx: {
+                    zIndex: 1000,
+                  }
+                },
+                columnsPanel: {
+                  sx: {
+                    '& .MuiDataGrid-panelFooter button': {
+                      color: colors.teal.main,
+                      '&:hover': {
+                        backgroundColor: colors.teal.light,
+                      }
+                    }
+                  }
+                }
+              }}
               sortModel={sortModel}
               onSortModelChange={(newSortModel) => {
                 if (newSortModel.length > 0) {
@@ -536,10 +461,6 @@ export default function SimpleDataGrid() {
                   setSortModel(newSortModel as any);
                   handleSort(field, sort as 'asc' | 'desc');
                 }
-              }}
-              columnVisibilityModel={columnVisibilityModel}
-              onColumnVisibilityModelChange={(newModel) => {
-                setColumnVisibilityModel(newModel);
               }}
             />
           </Box>

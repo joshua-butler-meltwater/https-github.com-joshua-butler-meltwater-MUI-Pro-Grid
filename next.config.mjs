@@ -13,6 +13,8 @@ const nextConfig = {
   experimental: {
     serverExternalPackages: ['@mui/x-license-pro'],
   },
+  // Temporarily disable React strict mode for testing react-beautiful-dnd
+  reactStrictMode: false,
 }
 
 export default nextConfig
